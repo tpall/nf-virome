@@ -76,20 +76,23 @@ workflow {
     // Stage 4: host coupling via CRISPR-spacers from existing MAGs.
     // Each unique bins_dir from the samplesheet contributes its bin FASTAs.
     // Bins are typically gzipped — minced will decompress on the fly.
-    // Skip the stage entirely if no bins_dir column exists or all rows omit it.
-    bins_ch = samplesheet_ch
-        .map { meta, row -> row.bins_dir }
-        .filter { it != null && it.toString().trim() != '' }
-        .unique()
-        .flatMap { d ->
-            def dir = file(d, checkIfExists: true)
-            dir.list()
-               .findAll { it ==~ /.+\.(fa|fasta|fna)(\.gz)?$/ }
-               .collect { dir.resolve(it) }
-        }
+    // Skip the stage entirely if --skip_host_couple is set, or if no
+    // bins_dir column exists / all rows omit it.
+    if (!params.skip_host_couple) {
+        bins_ch = samplesheet_ch
+            .map { meta, row -> row.bins_dir }
+            .filter { it != null && it.toString().trim() != '' }
+            .unique()
+            .flatMap { d ->
+                def dir = file(d, checkIfExists: true)
+                dir.list()
+                   .findAll { it ==~ /.+\.(fa|fasta|fna)(\.gz)?$/ }
+                   .collect { dir.resolve(it) }
+            }
 
-    HOST_COUPLE(
-        bins_ch,
-        CLUSTER.out.catalog
-    )
+        HOST_COUPLE(
+            bins_ch,
+            CLUSTER.out.catalog
+        )
+    }
 }
