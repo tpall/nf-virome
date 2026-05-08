@@ -45,10 +45,10 @@ results/
 │   ├── identify_stats.tsv               (per-sample CheckV count summary)
 │   ├── filtered/<sample>/<sample>_filtered.fna
 │   ├── genomad/<sample>/<sample>_summary/
-│   ├── checkv/<sample>/
-│   └── dramv_input/                     (flat handoff for downstream DRAM-v)
-│       ├── fastas/<sample>_filtered.fna
-│       └── genomad_genes/<sample>_virus_genes.tsv
+│   └── checkv/<sample>/
+├── dramv_input/                         (flat handoff for downstream DRAM-v)
+│   ├── fastas/<sample>_filtered.fna
+│   └── genomad_genes/<sample>_virus_genes.tsv
 ├── cluster/
 │   ├── votu_catalog.fa
 │   └── votu_clusters.tsv
@@ -67,9 +67,9 @@ results/
 
 ```bash
 nextflow run tpall/DRAM -r dev \
-  --input_fasta results/identify/dramv_input/fastas \
+  --input_fasta results/dramv_input/fastas \
   --fasta_fmt "*.fna" \
-  --genomad_genes "results/identify/dramv_input/genomad_genes/*.tsv" \
+  --genomad_genes "results/dramv_input/genomad_genes/*.tsv" \
   --use_dramv --call --annotate --summarize \
   -profile singularity
 ```
