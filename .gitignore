@@ -3,3 +3,4 @@ results/
 results_*/
 .nextflow*
 *.log
+assets/samplesheet_aging620.csv
