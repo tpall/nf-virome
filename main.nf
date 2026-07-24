@@ -6,6 +6,9 @@ include { IDENTIFY     } from './subworkflows/identify'
 include { CLUSTER      } from './subworkflows/cluster'
 include { QUANTIFY     } from './subworkflows/quantify'
 include { HOST_COUPLE  } from './subworkflows/host_couple'
+include { HOST_IPHOP   } from './subworkflows/host_iphop'
+include { SUMMARIZE    } from './subworkflows/summarize'
+include { LIFESTYLE    } from './subworkflows/lifestyle'
 
 workflow {
 
@@ -95,4 +98,42 @@ workflow {
             CLUSTER.out.catalog
         )
     }
+
+    // Stage 4b (HOST_IPHOP): integrated host prediction (CRISPR + blast +
+    // k-mer/codon-usage RF) for broad, calibrated host calls beyond the exact
+    // spacers of Stage 4. Optional — runs only when --iphop_db is set. Point it
+    // at an add_to_db-augmented db (bin/build_iphop_db.sh) to resolve hosts onto
+    // the cohort's own MAGs.
+    if (params.iphop_db) {
+        HOST_IPHOP(
+            CLUSTER.out.catalog,
+            file(params.iphop_db, checkIfExists: true)
+        )
+    }
+
+    // Stage 5 (LIFESTYLE): temperate/virulent prediction on the vOTU catalog
+    // representatives with PhaTYP (PhaBOX2). Optional — runs only when the
+    // --phabox_db is set. Replaces the earlier R-side provirus-suffix proxy.
+    if (params.phabox_db) {
+        LIFESTYLE(
+            CLUSTER.out.catalog,
+            file(params.phabox_db, checkIfExists: true)
+        )
+    }
+
+    // Stage 6 (SUMMARIZE): join external DRAM-v (tpall/DRAM -r dev --use_dramv)
+    // AMG annotations to the CoverM quantification. DRAM-v runs separately
+    // against ${outdir}/cluster/votu_catalog.fa; this stage skips gracefully
+    // (warning, no failure) until its two output tables exist, so a first pass
+    // runs discovery and a `-resume` pass after DRAM-v fires the AMG summary.
+    def dramv_ann = params.dramv2_annotations ?:
+        (params.dramv2_outdir ? "${params.dramv2_outdir}/ANNOTATE/annotations_with_flags.tsv" : null)
+    def dramv_sum = params.dramv2_summary ?:
+        (params.dramv2_outdir ? "${params.dramv2_outdir}/SUMMARIZE/summarized_genomes.tsv" : null)
+
+    SUMMARIZE(
+        QUANTIFY.out.long_table,
+        dramv_ann,
+        dramv_sum
+    )
 }
