@@ -6,6 +6,7 @@ include { IDENTIFY     } from './subworkflows/identify'
 include { CLUSTER      } from './subworkflows/cluster'
 include { QUANTIFY     } from './subworkflows/quantify'
 include { HOST_COUPLE  } from './subworkflows/host_couple'
+include { HOST_IPHOP   } from './subworkflows/host_iphop'
 include { SUMMARIZE    } from './subworkflows/summarize'
 include { LIFESTYLE    } from './subworkflows/lifestyle'
 
@@ -95,6 +96,18 @@ workflow {
         HOST_COUPLE(
             bins_ch,
             CLUSTER.out.catalog
+        )
+    }
+
+    // Stage 4b (HOST_IPHOP): integrated host prediction (CRISPR + blast +
+    // k-mer/codon-usage RF) for broad, calibrated host calls beyond the exact
+    // spacers of Stage 4. Optional — runs only when --iphop_db is set. Point it
+    // at an add_to_db-augmented db (bin/build_iphop_db.sh) to resolve hosts onto
+    // the cohort's own MAGs.
+    if (params.iphop_db) {
+        HOST_IPHOP(
+            CLUSTER.out.catalog,
+            file(params.iphop_db, checkIfExists: true)
         )
     }
 
