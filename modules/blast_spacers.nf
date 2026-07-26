@@ -19,7 +19,7 @@ process BLAST_SPACERS {
     set -euo pipefail
 
     # vOTU catalog as the BLAST DB
-    makeblastdb -in ${catalog} -dbtype nucl -out catalog_db -parse_seqids
+    makeblastdb -in ${catalog} -dbtype nucl -out catalog_db
 
     # blastn-short for ~30 bp spacer queries. -word_size 7 catches near-perfect
     # matches; we will further filter for >=95% identity and <=1 mismatch on
